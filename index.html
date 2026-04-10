@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StadiumIQ – Smart Cricket Stadium Experience</title>
+  <meta name="description" content="AI-powered smart stadium platform for real-time crowd management, navigation, queue prediction, and seat-based ordering at cricket venues." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════ ANIMATED BACKGROUND ═══════════════════════════ -->
+  <div class="bg-canvas" id="bgCanvas">
+    <canvas id="particleCanvas"></canvas>
+    <div class="gradient-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="orb orb-4"></div>
+    </div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- ═══════════════════════════ NAVIGATION ═══════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="url(#grad1)" stroke-width="2"/>
+          <path d="M8 12L11 15L16 9" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="grad1" x1="0" y1="0" x2="24" y2="24">
+              <stop offset="0%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="brand-name">StadiumIQ</span>
+    </div>
+
+    <div class="match-ticker">
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        LIVE
+      </div>
+      <span class="match-teams">MI <span class="vs-divider">vs</span> CSK</span>
+      <span class="match-score" id="navScore">MI 187/4 (18.2)</span>
+    </div>
+
+    <!-- Desktop nav links (visible ≥900px) -->
+    <nav class="nav-desktop-links" id="desktopNav">
+      <button class="nav-desk-btn active" data-desk-page="hero"       onclick="navigateTo('hero');       setDeskActive(this)">🏠 Home</button>
+      <button class="nav-desk-btn"        data-desk-page="heatmap"    onclick="navigateTo('heatmap');    setDeskActive(this)">🗺️ Map</button>
+      <button class="nav-desk-btn"        data-desk-page="navigation" onclick="navigateTo('navigation'); setDeskActive(this)">🧭 Navigate</button>
+      <button class="nav-desk-btn"        data-desk-page="services"   onclick="navigateTo('services');   setDeskActive(this)">🍔 Order</button>
+      <button class="nav-desk-btn"        data-desk-page="alerts"     onclick="navigateTo('alerts');     setDeskActive(this)">🔔 Alerts</button>
+      <button class="nav-desk-btn"        data-desk-page="profile"    onclick="navigateTo('profile');    setDeskActive(this)">👤 Profile</button>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="sos-btn" id="sosTrigger" title="Emergency SOS">
+        <span class="sos-icon">⚡</span> SOS
+      </button>
+      <div class="user-avatar" id="userAvatarBtn">
+        <div class="avatar-ring"></div>
+        <span class="avatar-letter">A</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════ MOBILE BOTTOM NAV ═══════════════════════════ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bottom-nav-item active" data-page="hero" onclick="navigateTo('hero')">
+      <span class="bnav-icon">🏠</span>
+      <span class="bnav-label">Home</span>
+    </button>
+    <button class="bottom-nav-item" data-page="heatmap" onclick="navigateTo('heatmap')">
+      <span class="bnav-icon">🗺️</span>
+      <span class="bnav-label">Map</span>
+    </button>
+    <button class="bottom-nav-item" data-page="navigation" onclick="navigateTo('navigation')">
+      <span class="bnav-icon">🧭</span>
+      <span class="bnav-label">Navigate</span>
+    </button>
+    <button class="bottom-nav-item" data-page="services" onclick="navigateTo('services')">
+      <span class="bnav-icon">🍔</span>
+      <span class="bnav-label">Order</span>
+    </button>
+    <button class="bottom-nav-item" data-page="alerts" onclick="navigateTo('alerts')">
+      <span class="bnav-icon">🔔</span>
+      <span class="bnav-label">Alerts</span>
+      <span class="alert-badge" id="alertBadge">3</span>
+    </button>
+    <button class="bottom-nav-item" data-page="profile" onclick="navigateTo('profile')">
+      <span class="bnav-icon">👤</span>
+      <span class="bnav-label">Profile</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════ MAIN APP CONTAINER ═══════════════════════════ -->
+  <main class="app-container" id="appContainer">
+
+    <!-- ────────────────── PAGE: HERO DASHBOARD ────────────────── -->
+    <section class="page active" id="page-hero">
+
+      <!-- HERO SECTION -->
+      <div class="hero-section">
+        <div class="hero-content">
+          <div class="match-context-bar">
+            <div class="context-chip">
+              <span class="chip-icon">🏟️</span>
+              <span>Wankhede Stadium, Mumbai</span>
+            </div>
+            <div class="live-indicator">
+              <span class="pulse-dot"></span>
+              <span>Match Live · T20 · 2nd Innings</span>
+            </div>
+            <div class="context-chip">
+              <span class="chip-icon">🎟️</span>
+              <span>Seat F-24, Block 7</span>
+            </div>
+          </div>
+
+          <div class="hero-headline-group">
+            <div class="team-badge-row">
+              <div class="team-badge team-1">
+                <div class="team-logo mi">MI</div>
+                <span class="team-name">Mumbai Indians</span>
+              </div>
+              <div class="vs-sphere">VS</div>
+              <div class="team-badge team-2">
+                <div class="team-logo csk">CSK</div>
+                <span class="team-name">Chennai Super Kings</span>
+              </div>
+            </div>
+            <p class="hero-tagline">Smart Stadium Experience <span class="tagline-gradient">Powered by AI</span></p>
+          </div>
+
+          <!-- SCOREBOARD GLASS CARD -->
+          <div class="scoreboard-card glass-card">
+            <div class="score-sect">
+              <div class="score-team">MI</div>
+              <div class="score-main" id="score1">187/4</div>
+              <div class="score-overs" id="overs1">18.2 ov</div>
+            </div>
+            <div class="score-divider">
+              <div class="score-label">TARGET</div>
+              <div class="target-num" id="targetNum">205</div>
+              <div class="score-label">REQ: <span id="reqRate">10.4/ov</span></div>
+            </div>
+            <div class="score-sect">
+              <div class="score-team">CSK</div>
+              <div class="score-main" id="score2">204/6</div>
+              <div class="score-overs" id="overs2">20.0 ov</div>
+            </div>
+          </div>
+
+          <div class="hero-ctas">
+            <button class="cta-primary" onclick="navigateTo('heatmap')">
+              <span class="cta-icon">🗺️</span>
+              View Live Map
+            </button>
+            <button class="cta-secondary" onclick="navigateTo('services')">
+              <span class="cta-icon">🍽️</span>
+              Explore Services
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK STATS ROW -->
+      <div class="quick-stats">
+        <div class="stat-card glass-card" onclick="navigateTo('heatmap')">
+          <div class="stat-icon crowd">👥</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statCrowd">38,240</div>
+            <div class="stat-label">Attendees Live</div>
+          </div>
+          <div class="stat-trend up">+2.4%</div>
+        </div>
+        <div class="stat-card glass-card" onclick="navigateTo('navigation')">
+          <div class="stat-icon nav">🧭</div>
+          <div class="stat-info">
+            <div class="stat-value green" id="statRoute">Gate C</div>
+            <div class="stat-label">Best Exit Route</div>
+          </div>
+          <div class="stat-trend neutral">→</div>
+        </div>
+        <div class="stat-card glass-card" onclick="navigateTo('services')">
+          <div class="stat-icon queue">⏱️</div>
+          <div class="stat-info">
+            <div class="stat-value orange" id="statQueue">~4 min</div>
+            <div class="stat-label">Nearest Queue</div>
+          </div>
+          <div class="stat-trend down">-30s</div>
+        </div>
+        <div class="stat-card glass-card" onclick="navigateTo('alerts')">
+          <div class="stat-icon alert">🔔</div>
+          <div class="stat-info">
+            <div class="stat-value red" id="statAlerts">3</div>
+            <div class="stat-label">Active Alerts</div>
+          </div>
+          <div class="stat-trend warn">!</div>
+        </div>
+      </div>
+
+      <!-- ZONE OVERVIEW CARDS -->
+      <div class="section-header">
+        <h2 class="section-title">Zone Overview</h2>
+        <button class="see-all-btn" onclick="navigateTo('heatmap')">Full Map →</button>
+      </div>
+      <div class="zone-cards" id="zoneCards">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- ACTIVE ORDERS FEED -->
+      <div class="section-header">
+        <h2 class="section-title">Your Orders</h2>
+        <button class="see-all-btn" onclick="navigateTo('services')">All Orders →</button>
+      </div>
+      <div class="orders-feed" id="ordersFeed">
+        <!-- Injected by JS -->
+      </div>
+
+    </section>
+
+    <!-- ────────────────── PAGE: LIVE CROWD HEATMAP ────────────────── -->
+    <section class="page" id="page-heatmap">
+      <div class="page-header">
+        <h1 class="page-title">Live Crowd Heatmap</h1>
+        <div class="page-subtitle">Real-time density across all stadium zones</div>
+      </div>
+
+      <div class="heatmap-container glass-card">
+        <div class="heatmap-controls">
+          <div class="hm-legend">
+            <span class="legend-dot low"></span><span>Low</span>
+            <span class="legend-dot medium"></span><span>Medium</span>
+            <span class="legend-dot high"></span><span>High</span>
+            <span class="legend-dot critical"></span><span>Critical</span>
+          </div>
+          <div class="hm-refresh">
+            <span class="refresh-icon spinning">⟳</span>
+            <span id="lastRefresh">Just now</span>
+          </div>
+        </div>
+
+        <!-- STADIUM SVG MAP -->
+        <div class="stadium-map-wrapper">
+          <div class="stadium-svg-container" id="stadiumMap">
+            <!-- Rendered by JS -->
+          </div>
+          <div class="map-tooltip glass-card" id="mapTooltip" style="display:none">
+            <div class="tooltip-zone-name" id="ttZoneName">–</div>
+            <div class="tooltip-density" id="ttDensity">–</div>
+            <div class="tooltip-count" id="ttCount">–</div>
+            <div class="tooltip-wait" id="ttWait">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZONE TABLE -->
+      <div class="zone-table-card glass-card">
+        <h3 class="card-title">Zone Status Board</h3>
+        <div class="zone-table-wrapper">
+          <table class="zone-table" id="zoneTable">
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Density</th>
+                <th>People</th>
+                <th>Capacity</th>
+                <th>Wait</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="zoneTableBody">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────── PAGE: NAVIGATION ────────────────── -->
+    <section class="page" id="page-navigation">
+      <div class="page-header">
+        <h1 class="page-title">Smart Navigation</h1>
+        <div class="page-subtitle">AI-optimized least-crowded routes</div>
+      </div>
+
+      <div class="nav-input-card glass-card">
+        <h3 class="card-title">Where do you want to go?</h3>
+        <div class="nav-form">
+          <div class="form-group">
+            <label class="form-label">📍 Current Location</label>
+            <select class="form-select" id="navFrom">
+              <option value="seat">My Seat – Block 7, F-24</option>
+              <option value="entrance">Main Entrance Gate</option>
+              <option value="concession">Concession Stand A</option>
+              <option value="restroom">Restroom Block B</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🎯 Destination</label>
+            <select class="form-select" id="navTo">
+              <option value="food_court">Food Court – Zone D</option>
+              <option value="restroom_c">Restroom – Block C</option>
+              <option value="gate_a">Gate A (Exit)</option>
+              <option value="gate_c">Gate C (Exit)</option>
+              <option value="first_aid">First Aid Bay</option>
+              <option value="vip_lounge">VIP Lounge</option>
+            </select>
+          </div>
+          <button class="cta-primary full-width" onclick="calculateRoute()">
+            🧭 Find Best Route
+          </button>
+        </div>
+      </div>
+
+      <div class="route-result-card glass-card" id="routeResult" style="display:none">
+        <div class="route-header">
+          <div class="route-badge best">✓ Recommended Route</div>
+          <div class="route-meta">
+            <span class="route-time" id="routeTime">~3 min walk</span>
+          </div>
+        </div>
+        <div class="route-steps" id="routeSteps">
+          <!-- Injected by JS -->
+        </div>
+        <div class="route-crowd-info">
+          <div class="crowd-chip low">🟢 Crowd: Low</div>
+          <div class="crowd-chip">📏 Distance: ~320m</div>
+        </div>
+      </div>
+
+      <!-- POPULAR DESTINATIONS -->
+      <h3 class="section-title">Popular Destinations</h3>
+      <div class="quick-dest-grid" id="quickDests">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- ALTERNATIVE ROUTES -->
+      <div class="alt-routes-card glass-card" id="altRoutes" style="display:none">
+        <h3 class="card-title">Alternative Routes</h3>
+        <div id="altRoutesContent"></div>
+      </div>
+    </section>
+
+    <!-- ────────────────── PAGE: SERVICES & ORDERING ────────────────── -->
+    <section class="page" id="page-services">
+      <div class="page-header">
+        <h1 class="page-title">Stadium Services</h1>
+        <div class="page-subtitle">Order to your seat or explore nearby stalls</div>
+      </div>
+
+      <!-- QUEUE STATUS BANNER -->
+      <div class="queue-banner glass-card" id="queueBanner">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- CATEGORY TABS -->
+      <div class="category-tabs">
+        <button class="cat-tab active" data-cat="food" onclick="filterCategory('food', this)">🍔 Food</button>
+        <button class="cat-tab" data-cat="beverages" onclick="filterCategory('beverages', this)">🥤 Beverages</button>
+        <button class="cat-tab" data-cat="snacks" onclick="filterCategory('snacks', this)">🿁 Snacks</button>
+        <button class="cat-tab" data-cat="merchandise" onclick="filterCategory('merchandise', this)">👕 Merch</button>
+      </div>
+
+      <!-- MENU GRID -->
+      <div class="menu-grid" id="menuGrid">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- ORDER CART -->
+      <div class="cart-panel glass-card" id="cartPanel">
+        <div class="cart-header">
+          <h3 class="card-title">🛒 Your Cart</h3>
+          <span class="cart-count" id="cartCount">0 items</span>
+        </div>
+        <div class="cart-items" id="cartItems">
+          <div class="empty-cart">Add items to your cart</div>
+        </div>
+        <div class="cart-footer" id="cartFooter" style="display:none">
+          <div class="cart-total">
+            <span>Total</span>
+            <span id="cartTotal">₹0</span>
+          </div>
+          <div class="delivery-info">
+            <span class="delivery-icon">🪑</span>
+            <span>Delivering to Seat F-24, Block 7</span>
+          </div>
+          <button class="cta-primary full-width" onclick="placeOrder()">
+            Place Order – ₹<span id="cartTotalBtn">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ORDER TRACKING -->
+      <div class="section-header" id="trackingHeader" style="display:none">
+        <h2 class="section-title">Order Tracking</h2>
+      </div>
+      <div class="tracking-cards" id="trackingCards">
+        <!-- Injected by JS -->
+      </div>
+    </section>
+
+    <!-- ────────────────── PAGE: ALERTS CENTER ────────────────── -->
+    <section class="page" id="page-alerts">
+      <div class="page-header">
+        <h1 class="page-title">Alerts Center</h1>
+        <div class="page-subtitle">Real-time notifications & stadium updates</div>
+      </div>
+
+      <div class="alert-filter-bar">
+        <button class="alert-filter active" data-sev="all" onclick="filterAlerts('all', this)">All</button>
+        <button class="alert-filter" data-sev="critical" onclick="filterAlerts('critical', this)">🔴 Critical</button>
+        <button class="alert-filter" data-sev="warning" onclick="filterAlerts('warning', this)">🟠 Warning</button>
+        <button class="alert-filter" data-sev="info" onclick="filterAlerts('info', this)">🔵 Info</button>
+      </div>
+
+      <div class="alerts-list" id="alertsList">
+        <!-- Injected by JS -->
+      </div>
+    </section>
+
+    <!-- ────────────────── PAGE: PROFILE ────────────────── -->
+    <section class="page" id="page-profile">
+      <div class="page-header">
+        <h1 class="page-title">My Profile</h1>
+        <div class="page-subtitle">Your stadium experience settings</div>
+      </div>
+
+      <div class="profile-hero-card glass-card">
+        <div class="profile-avatar-large">
+          <div class="avatar-ring-large"></div>
+          <div class="avatar-inner">A</div>
+        </div>
+        <div class="profile-info">
+          <h2 class="profile-name" id="profileName">Aryan Shah</h2>
+          <div class="profile-seat">🎟️ Seat F-24, Block 7 · West Stand</div>
+          <div class="profile-badge">🏆 Premium Member</div>
+        </div>
+      </div>
+
+      <div class="profile-stats glass-card">
+        <div class="pstat">
+          <div class="pstat-value" id="pOrders">7</div>
+          <div class="pstat-label">Orders Today</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-value" id="pMatches">23</div>
+          <div class="pstat-label">Matches Attended</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-value" id="pPoints">1,840</div>
+          <div class="pstat-label">Loyalty Points</div>
+        </div>
+      </div>
+
+      <div class="settings-group glass-card">
+        <h3 class="card-title">Preferences</h3>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">Crowd Alerts</span>
+            <span class="setting-desc">Notify when nearby zones hit HIGH density</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked id="toggleCrowdAlerts" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">Queue Notifications</span>
+            <span class="setting-desc">Alert when wait time drops below 5 min</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked id="toggleQueueAlerts" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">Match Score Updates</span>
+            <span class="setting-desc">Live scoring every ball</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked id="toggleScore" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">Navigation Mode</span>
+            <span class="setting-desc">Prioritize least crowded routes</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked id="toggleNavMode" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-group glass-card">
+        <h3 class="card-title">Dietary Preferences</h3>
+        <div class="pref-chips" id="dietChips">
+          <div class="pref-chip active">🥗 Vegetarian</div>
+          <div class="pref-chip">🌶️ Spicy</div>
+          <div class="pref-chip active">🥤 Cold Beverages</div>
+          <div class="pref-chip">🍗 Non-Veg</div>
+          <div class="pref-chip">🌾 Gluten-Free</div>
+        </div>
+      </div>
+
+      <button class="cta-danger full-width" onclick="openSOS()">
+        ⚡ Emergency SOS – Request Assistance
+      </button>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════ SOS MODAL ═══════════════════════════ -->
+  <div class="modal-overlay" id="sosModal" style="display:none">
+    <div class="sos-modal glass-card">
+      <div class="sos-modal-header">
+        <div class="sos-icon-large">⚡</div>
+        <h2>Emergency Assistance</h2>
+        <p>Our stadium team will reach your location immediately</p>
+      </div>
+      <div class="sos-location">
+        <div class="sos-loc-item">📍 Location: Seat F-24, Block 7</div>
+        <div class="sos-loc-item">🏟️ Zone: West Stand – Section 3</div>
+      </div>
+      <div class="sos-options">
+        <button class="sos-option-btn medical" onclick="triggerSOS('medical')">🚑 Medical Emergency</button>
+        <button class="sos-option-btn security" onclick="triggerSOS('security')">🛡️ Security Issue</button>
+        <button class="sos-option-btn fire" onclick="triggerSOS('fire')">🔥 Fire / Evacuation</button>
+        <button class="sos-option-btn lost" onclick="triggerSOS('lost')">🔍 Lost / Need Help</button>
+      </div>
+      <button class="cancel-btn" onclick="closeModal('sosModal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ═══════════════════════════ ORDER CONFIRM MODAL ═══════════════════════════ -->
+  <div class="modal-overlay" id="orderModal" style="display:none">
+    <div class="order-modal glass-card">
+      <div class="order-success-icon">✅</div>
+      <h2>Order Placed!</h2>
+      <p>Your order is being prepared and will be delivered to <strong>Seat F-24, Block 7</strong></p>
+      <div class="order-eta">
+        <span class="eta-label">Estimated Delivery</span>
+        <span class="eta-time" id="etaTime">12–15 minutes</span>
+      </div>
+      <div class="order-id-row">
+        <span>Order ID</span>
+        <span class="order-id" id="orderId">#ORD-00123</span>
+      </div>
+      <button class="cta-primary full-width" onclick="closeModal('orderModal')">Track Order</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
